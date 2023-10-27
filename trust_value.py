@@ -8,8 +8,8 @@ class Node:
     '''
     id = -1
     R = 0  # 节点行为可靠性
-    aaa = 0  # 异常因子
-    bbb = 0  # 时延因子
+    abnormal_factor = 0  # 异常因子
+    delay_factor = 0  # 时延因子
 
     def __init__(self, behavior, value):
         '''
@@ -23,38 +23,38 @@ class Node:
     def behav1(self):
         '''
         行为B1：良好参与方：行为良好、稳定性高（异常度低，时延低/异常因子和时延因子都高）
-              异常因子aaa 在0.9-1之间
-              时延因子bbb 在0.9-1之间
+              异常因子abnormal_factor 在0.9-1之间
+              时延因子delay_factor 在0.9-1之间
         :return:
         '''
-        self.aaa = random.randint(11000, 13000) / 10000  # 异常因子
-        self.bbb = random.randint(11000, 13000) / 10000  # 时延因子
-        if self.aaa >= 1.275 and self.bbb >= 1.275:
+        self.abnormal_factor = random.randint(11000, 13000) / 10000  # 异常因子
+        self.delay_factor = random.randint(11000, 13000) / 10000  # 时延因子
+        if self.abnormal_factor >= 1.275 and self.delay_factor >= 1.275:
             self.R = 1
         else:
-            self.R = (1 / (1 + math.exp(-self.aaa))) * self.bbb  # 可靠性计算
+            self.R = (1 / (1 + math.exp(-self.abnormal_factor))) * self.delay_factor  # 可靠性计算
 
     def behav2(self):
         '''
         行为B2：恶意参与方：可靠性差、稳定性高（异常度高、时延高/异常因子低，时延因子低）
-              异常因子aaa 在0-0.2之间
-              时延因子bbb 在0-0.2之间
+              异常因子abnormal_factor 在0-0.2之间
+              时延因子delay_factor 在0-0.2之间
         :return:
         '''
-        self.aaa = random.randint(0, 7000) / 10000  # 异常因子
-        self.bbb = random.randint(0, 7000) / 10000  # 时延因子
-        self.R = (1 / (1 + math.exp(-self.aaa))) * self.bbb  # 可靠性计算
+        self.abnormal_factor = random.randint(0, 7000) / 10000  # 异常因子
+        self.delay_factor = random.randint(0, 7000) / 10000  # 时延因子
+        self.R = (1 / (1 + math.exp(-self.abnormal_factor))) * self.delay_factor  # 可靠性计算
 
     def __str__(self):
-        return 'aaa:' + str(self.aaa) + '; bbb:' + str(self.bbb) + '; R:' + str(self.R) + ';'
+        return 'abnormal_factor:' + str(self.abnormal_factor) + '; delay_factor:' + str(self.delay_factor) + '; R:' + str(self.R) + ';'
 
 
 # 计算当前信任值
-def dangqian(HL, hhh):  # 当前行为可靠性 历史交互次数（阈值70）
+def current_trust(HL, interation_count):  # 当前行为可靠性 历史交互次数（阈值70）
     Rcurr = HL[19][0]
     if Rcurr > 0.5:
-        if hhh <= 70 and hhh >= 0:
-            g = 0.0001 * hhh * hhh + 0.5
+        if interation_count <= 70 and interation_count >= 0:
+            g = 0.0001 * interation_count * interation_count + 0.5
         else:
             g = 1
         return 0.5 + g * (Rcurr - 0.5)
@@ -63,7 +63,7 @@ def dangqian(HL, hhh):  # 当前行为可靠性 历史交互次数（阈值70）
 
 
 # 计算历史信任值
-def lishi(HL):  # 历史交互信息表（部分）
+def historical_trust(HL):  # 历史交互信息表（部分）
     hist = 0
     for i in range(19):
         hist += HL[i][0] * (math.pow(2, -(19 - i)))
@@ -71,12 +71,12 @@ def lishi(HL):  # 历史交互信息表（部分）
 
 
 # 计算直接信任值
-def zhijie(dqvalue, lsvalue, hhh, Scurr, HL, Thist):  # 当前信任值 历史信任值 历史交互次数 当前行为稳定性 历史交互信息表（部分） 历史信任值
-    if hhh > 1:
-        shuxi = 1 - (1 / (pow((math.exp(hhh - 1)), 0.1) + 1))
+def direct_trust(current_trust_value, historical_trust_value, interation_count, current_stability, HL, Thist):  # 当前信任值 历史信任值 历史交互次数 当前行为稳定性 历史交互信息表（部分） 历史信任值
+    if interation_count > 1:
+        shuxi = 1 - (1 / (pow((math.exp(interation_count - 1)), 0.1) + 1))
     else:
         shuxi = 0
-    whist = shuxi * Scurr
+    whist = shuxi * current_stability
     wcurr = 1 - whist
     total = 0
     Rcurr = HL[19][0]
@@ -89,58 +89,58 @@ def zhijie(dqvalue, lsvalue, hhh, Scurr, HL, Thist):  # 当前信任值 历史�
         n = 0.001 * pow(2, total)
         if n > 1:
             n = 1
-        return ((whist * lsvalue + wcurr * dqvalue) - Thist) * n + Thist
+        return ((whist * historical_trust_value + wcurr * current_trust_value) - Thist) * n + Thist
     elif Rcurr <= 0.5:
-        return whist * lsvalue + wcurr * dqvalue
+        return whist * historical_trust_value + wcurr * current_trust_value
 
 
 # 计算推荐信任度
-def tuijian(RL):  # 推荐信息表（部分）
+def recommended_trust(RL):  # 推荐信息表（部分）
     HR = 0
-    jiahe = 0
+    sum = 0
     for i in range(20):
         HR += RL[i][0]
     if HR == 0:  # 如果没有推荐服务器
         return 0
     else:
         for i in range(20):
-            jiahe += (RL[i][0] / HR) * RL[i][1]
-    return jiahe
+            sum += (RL[i][0] / HR) * RL[i][1]
+    return sum
 
 
 # 计算综合信任度
-def zonghe(tjvalue, zjvalue, HHH, RL, id):  # 推荐信任度 直接信任度 历史交互次数列表 推荐信息列表 节点id
-    if sum(HHH) == 0:
+def comprehensive_trust (recommended_trust_value, direct_trust_value, interation_count, RL, id):  # 推荐信任度 直接信任度 历史交互次数列表 推荐信息列表 节点id
+    if sum(interation_count) == 0:
         a = 0
     else:
-        a = HHH[id] / (sum(HHH) / 100)
+        a = interation_count[id] / (sum(interation_count) / 100)
     addR = []
     for i in range(100):
-        RRR = 0
+        total_R = 0
         for j in range(20):
-            RRR += RL[i][j][0]
-        addR.append(RRR)
+            total_R += RL[i][j][0]
+        addR.append(total_R)
     if sum(addR) == 0:
         b = 0
     else:
         b = addR[id] / (sum(addR) / 100)
     if a == 0 and b == 0:
-        wr = 0
+        weight = 0
     elif a == 0 and b != 0:
-        wr = 0.5
+        weight = 0.5
     else:
-        wr = b / (a + b)
-    wd = 1 - wr
-    return wr * tjvalue + wd * zjvalue
+        weight = b / (a + b)
+    wd = 1 - weight
+    return weight * recommended_trust_value + wd * direct_trust_value
 
 
 # 计算综合信任度整体函数
-def hanshhu(R, listhhh, listHL, listRL, listThist, S, id):  # 当前行为可靠性 历史交互次数（列表） 历史交互信息表（列表） 推荐信息表（列表） 行为稳定性 节点id
-    Tcurr = dangqian(listHL[id], listhhh[id])  # 当前信任值
-    Thist = lishi(listHL[id])  # 历史信任值
-    Tzhijie = zhijie(Tcurr, Thist, listhhh[id], S, listHL[id], listThist[id])  # 直接信任值
-    Ttuijian = tuijian(listRL[id])  # 推荐信任度
-    TTT = zonghe(Ttuijian, Tzhijie, listhhh, listRL, id)  # 综合信任度
+def function(R, list_interation_count, listHL, listRL, listThist, S, id):  # 当前行为可靠性 历史交互次数（列表） 历史交互信息表（列表） 推荐信息表（列表） 行为稳定性 节点id
+    Tcurr = current_trust(listHL[id], list_interation_count[id])  # 当前信任值
+    Thist = historical_trust(listHL[id])  # 历史信任值
+    Tdirect_trust = direct_trust(Tcurr, Thist, list_interation_count[id], S, listHL[id], listThist[id])  # 直接信任值
+    Trecommended_trust = recommended_trust(listRL[id])  # 推荐信任度
+    TTT = comprehensive_trust (Trecommended_trust, Tdirect_trust, list_interation_count, listRL, id)  # 综合信任度
     return TTT
 
 
@@ -209,9 +209,9 @@ for i in range(100):
     k2 += 1
 
 # 存储1-100个节点的历史交互次数，最初1-100节点的历史交互次数都为0
-list_hhh = []
+list_interation_count = []
 for i in range(100):
-    list_hhh.append(0)
+    list_interation_count.append(0)
 
 # 存储1-100个节点的历史信任度值，最初1-100节点的历史信任度值都定义为0.5
 list_Thist = []
@@ -250,58 +250,58 @@ def main(f):
             #     add += abs(list_HL[i][j + 1][0] - list_HL[i][j][0])
             # S = add / 19
             # list_HL[i][19][1] = S
-            # list_hhh[i] += 1
-            # for gengxin in range(20):
-            #     tuijian_result = 0
-            #     tuijian_k1 = 1
-            #     tuijian_HL = [[[0.5, 0.5]]]  # 推荐服务器 历史交互表
+            # list_interation_count[i] += 1
+            # for update_value in range(20):
+            #     recommended_trust_result = 0
+            #     recommended_trust_k1 = 1
+            #     recommended_trust_HL = [[[0.5, 0.5]]]  # 推荐服务器 历史交互表
             #     for nn in range(19):
-            #         tuijian_HL[0].append([0.5, 0.5])
+            #         recommended_trust_HL[0].append([0.5, 0.5])
             #     for ll in range(99):
-            #         tuijian_HL.append([[0, 0]])
+            #         recommended_trust_HL.append([[0, 0]])
             #         for nn in range(19):
-            #             tuijian_HL[tuijian_k1].append([0, 0])
-            #         tuijian_k1 += 1
-            #     tuijian_k2 = 0
-            #     tuijian_RL = []  # 推荐服务器 推荐信息表
+            #             recommended_trust_HL[recommended_trust_k1].append([0, 0])
+            #         recommended_trust_k1 += 1
+            #     recommended_trust_k2 = 0
+            #     recommended_trust_RL = []  # 推荐服务器 推荐信息表
             #     for nn in range(100):
-            #         tuijian_RL.append([[0, 0]])
+            #         recommended_trust_RL.append([[0, 0]])
             #         for ll in range(19):
-            #             tuijian_RL[tuijian_k2].append([0, 0])
-            #         tuijian_k2 += 1
-            #     tuijian_hhh = []  # 推荐服务器 历史交互次数
+            #             recommended_trust_RL[recommended_trust_k2].append([0, 0])
+            #         recommended_trust_k2 += 1
+            #     recommended_trust_interation_count = []  # 推荐服务器 历史交互次数
             #     for ll in range(100):
-            #         tuijian_hhh.append(0)
-            #     tuijian_Thist = []  # 推荐服务器  历史信任值
-            #     tuijian_Thist.append(0.5)
-            #     list_RL[i][gengxin][0] = random.randint(0, 100)  # 随机产生推荐服务器与节点的历史交互次数
-            #     for jisuan in range(list_RL[i][gengxin][0]):  # 以实际交互为准
-            #         tuijian_add = 0
-            #         tuijian_p = Node(2, list_Thist[i])
-            #         tuijian_p.behav2()
-            #         tuijian_HL[0].append([tuijian_p.R, 0])
-            #         del tuijian_HL[0][0]
+            #         recommended_trust_interation_count.append(0)
+            #     recommended_trust_Thist = []  # 推荐服务器  历史信任值
+            #     recommended_trust_Thist.append(0.5)
+            #     list_RL[i][update_value][0] = random.randint(0, 100)  # 随机产生推荐服务器与节点的历史交互次数
+            #     for caculate in range(list_RL[i][update_value][0]):  # 以实际交互为准
+            #         recommended_trust_add = 0
+            #         recommended_trust_p = Node(2, list_Thist[i])
+            #         recommended_trust_p.behav2()
+            #         recommended_trust_HL[0].append([recommended_trust_p.R, 0])
+            #         del recommended_trust_HL[0][0]
             #         for j in range(19):
-            #             tuijian_add += abs(tuijian_HL[0][j + 1][0] - tuijian_HL[0][j][0])
-            #         tuijian_S = tuijian_add / 19
-            #         tuijian_HL[0][19][1] = tuijian_S
-            #         tuijian_hhh[0] += 1  # 更新历史交互次数列表
-            #         tuijian_zjhist=zhijie(dangqian(tuijian_HL[0], tuijian_hhh[0]), lishi(tuijian_HL[0]), tuijian_hhh[0], tuijian_HL[0][19][1], tuijian_HL[0],tuijian_Thist[0])
-            #         tuijian_result = hanshhu(tuijian_p.R, tuijian_hhh, tuijian_HL, tuijian_RL, tuijian_Thist,tuijian_S, 0)
-            #         tuijian_Thist[0]=tuijian_zjhist
-            #     list_RL[i][gengxin][1] = tuijian_result
-            # zjhist=zhijie(dangqian(list_HL[i], list_hhh[i]), lishi(list_HL[i]), list_hhh[i], list_HL[i][19][1], list_HL[i],list_Thist[i])
-            # result = hanshhu(p.R, list_hhh, list_HL, list_RL, list_Thist, list_HL[i][19][1], i)
-            # print('{},{},{},{},{},{}'.format(circul+1,dangqian(list_HL[i], list_hhh[i]),lishi(list_HL[i]),zjhist,tuijian(list_RL[i]),result),file=f)
+            #             recommended_trust_add += abs(recommended_trust_HL[0][j + 1][0] - recommended_trust_HL[0][j][0])
+            #         recommended_trust_S = recommended_trust_add / 19
+            #         recommended_trust_HL[0][19][1] = recommended_trust_S
+            #         recommended_trust_interation_count[0] += 1  # 更新历史交互次数列表
+            #         recommended_trust_direct_hist=direct_trust(current_trust(recommended_trust_HL[0], recommended_trust_interation_count[0]), historical_trust(recommended_trust_HL[0]), recommended_trust_interation_count[0], recommended_trust_HL[0][19][1], recommended_trust_HL[0],recommended_trust_Thist[0])
+            #         recommended_trust_result = hanshhu(recommended_trust_p.R, recommended_trust_interation_count, recommended_trust_HL, recommended_trust_RL, recommended_trust_Thist,recommended_trust_S, 0)
+            #         recommended_trust_Thist[0]=recommended_trust_direct_hist
+            #     list_RL[i][update_value][1] = recommended_trust_result
+            # direct_hist=direct_trust(current_trust(list_HL[i], list_interation_count[i]), historical_trust(list_HL[i]), list_interation_count[i], list_HL[i][19][1], list_HL[i],list_Thist[i])
+            # result = function(p.R, list_interation_count, list_HL, list_RL, list_Thist, list_HL[i][19][1], i)
+            # print('{},{},{},{},{},{}'.format(circul+1,current_trust(list_HL[i], list_interation_count[i]),historical_trust(list_HL[i]),direct_hist,recommended_trust(list_RL[i]),result),file=f)
             # # print(list_HL[i], file=f)
             # print(list_RL[i], file=f)
-            # print('S {} ;    dqhist {} ;    Rcurr: {} ;'.format(list_HL[i][19][1],list_Thist[i],p.R), file=f)
-            # print('dq: {}'.format(dangqian(list_HL[i], list_hhh[i])),file=f)
-            # print('ls: {}'.format(lishi(list_HL[i])),file=f)
-            # print('zj: {}'.format(zjhist),file=f)
-            # print('tj: {}'.format(tuijian(list_RL[i])),file=f)
+            # print('S {} ;    current_hist {} ;    Rcurr: {} ;'.format(list_HL[i][19][1],list_Thist[i],p.R), file=f)
+            # print('dq: {}'.format(current_trust(list_HL[i], list_interation_count[i])),file=f)
+            # print('ls: {}'.format(historical_trust(list_HL[i])),file=f)
+            # print('zj: {}'.format(direct_hist),file=f)
+            # print('tj: {}'.format(recommended_trust(list_RL[i])),file=f)
             # print('T：{} '.format(result),file=f)
-            # list_Thist[i] = zjhist
+            # list_Thist[i] = direct_hist
 
             p = Node(3, list_Thist[i])
             if count4[circul] == 1:
@@ -320,72 +320,72 @@ def main(f):
                     add += abs(list_HL[i][j + 1][0] - list_HL[i][j][0])
                 S = add / 19
                 list_HL[i][19][1] = S
-            list_hhh[i] += 1
+            list_interation_count[i] += 1
 
             # 更新推荐列表
-            for gengxin in range(20):
-                tuijian_result = 0
-                tuijian_k1 = 1
-                tuijian_HL = [[[0.5, 0.5]]]  # 推荐服务器 历史交互表
+            for update_value in range(20):
+                recommended_trust_result = 0
+                recommended_trust_k1 = 1
+                recommended_trust_HL = [[[0.5, 0.5]]]  # 推荐服务器 历史交互表
                 for nn in range(19):
-                    tuijian_HL[0].append([0.5, 0.5])
+                    recommended_trust_HL[0].append([0.5, 0.5])
                 for ll in range(99):
-                    tuijian_HL.append([[0, 0]])
+                    recommended_trust_HL.append([[0, 0]])
                     for nn in range(19):
-                        tuijian_HL[tuijian_k1].append([0, 0])
-                    tuijian_k1 += 1
-                tuijian_k2 = 0
-                tuijian_RL = []  # 推荐服务器 推荐信息表
+                        recommended_trust_HL[recommended_trust_k1].append([0, 0])
+                    recommended_trust_k1 += 1
+                recommended_trust_k2 = 0
+                recommended_trust_RL = []  # 推荐服务器 推荐信息表
                 for nn in range(100):
-                    tuijian_RL.append([[0, 0]])
+                    recommended_trust_RL.append([[0, 0]])
                     for ll in range(19):
-                        tuijian_RL[tuijian_k2].append([0, 0])
-                    tuijian_k2 += 1
-                tuijian_hhh = []  # 推荐服务器 历史交互次数
+                        recommended_trust_RL[recommended_trust_k2].append([0, 0])
+                    recommended_trust_k2 += 1
+                recommended_trust_interation_count = []  # 推荐服务器 历史交互次数
                 for ll in range(100):
-                    tuijian_hhh.append(0)
-                tuijian_Thist = []  # 推荐服务器  历史信任值
-                tuijian_Thist.append(0.5)
-                list_RL[i][gengxin][0] = random.randint(0, 100)  # 随机产生推荐服务器与节点的历史交互次数
-                for jisuan in range(list_RL[i][gengxin][0]):  # 以实际交互为准
-                    tuijian_add = 0
-                    if count4[jisuan] == 1:
-                        tuijian_p = Node(1, list_Thist[i])
-                        tuijian_p.behav1()
-                        tuijian_HL[0].append([tuijian_p.R, 0])
-                        del tuijian_HL[0][0]
+                    recommended_trust_interation_count.append(0)
+                recommended_trust_Thist = []  # 推荐服务器  历史信任值
+                recommended_trust_Thist.append(0.5)
+                list_RL[i][update_value][0] = random.randint(0, 100)  # 随机产生推荐服务器与节点的历史交互次数
+                for caculate in range(list_RL[i][update_value][0]):  # 以实际交互为准
+                    recommended_trust_add = 0
+                    if count4[caculate] == 1:
+                        recommended_trust_p = Node(1, list_Thist[i])
+                        recommended_trust_p.behav1()
+                        recommended_trust_HL[0].append([recommended_trust_p.R, 0])
+                        del recommended_trust_HL[0][0]
                         for j in range(19):
-                            tuijian_add += abs(tuijian_HL[0][j + 1][0] - tuijian_HL[0][j][0])
-                        tuijian_S = tuijian_add / 19
-                        tuijian_HL[0][19][1] = tuijian_S
-                        tuijian_hhh[0] += 1  # 更新历史交互次数列表
-                        tuijian_zjhist = zhijie(dangqian(tuijian_HL[0], tuijian_hhh[0]), lishi(tuijian_HL[0]),
-                                                tuijian_hhh[0], tuijian_HL[0][19][1], tuijian_HL[0], tuijian_Thist[0])
-                        tuijian_result = hanshhu(tuijian_p.R, tuijian_hhh, tuijian_HL, tuijian_RL, tuijian_Thist,
-                                                 tuijian_S, 0)
-                        tuijian_Thist[0] = tuijian_zjhist
-                    elif count4[jisuan] == 0:
-                        tuijian_p = Node(2, list_Thist[i])
-                        tuijian_p.behav2()
-                        tuijian_HL[0].append([tuijian_p.R, 0])
-                        del tuijian_HL[0][0]
+                            recommended_trust_add += abs(recommended_trust_HL[0][j + 1][0] - recommended_trust_HL[0][j][0])
+                        recommended_trust_S = recommended_trust_add / 19
+                        recommended_trust_HL[0][19][1] = recommended_trust_S
+                        recommended_trust_interation_count[0] += 1  # 更新历史交互次数列表
+                        recommended_trust_direct_hist = direct_trust(current_trust(recommended_trust_HL[0], recommended_trust_interation_count[0]), historical_trust(recommended_trust_HL[0]),
+                                                recommended_trust_interation_count[0], recommended_trust_HL[0][19][1], recommended_trust_HL[0], recommended_trust_Thist[0])
+                        recommended_trust_result = function(recommended_trust_p.R, recommended_trust_interation_count, recommended_trust_HL, recommended_trust_RL, recommended_trust_Thist,
+                                                 recommended_trust_S, 0)
+                        recommended_trust_Thist[0] = recommended_trust_direct_hist
+                    elif count4[caculate] == 0:
+                        recommended_trust_p = Node(2, list_Thist[i])
+                        recommended_trust_p.behav2()
+                        recommended_trust_HL[0].append([recommended_trust_p.R, 0])
+                        del recommended_trust_HL[0][0]
                         for j in range(19):
-                            tuijian_add += abs(tuijian_HL[0][j + 1][0] - tuijian_HL[0][j][0])
-                        tuijian_S = tuijian_add / 19
-                        tuijian_HL[0][19][1] = tuijian_S
-                        tuijian_hhh[0] += 1  # 更新历史交互次数列表
-                        tuijian_zjhist = zhijie(dangqian(tuijian_HL[0], tuijian_hhh[0]), lishi(tuijian_HL[0]),
-                                                tuijian_hhh[0], tuijian_HL[0][19][1], tuijian_HL[0], tuijian_Thist[0])
-                        tuijian_result = hanshhu(tuijian_p.R, tuijian_hhh, tuijian_HL, tuijian_RL, tuijian_Thist,
-                                                 tuijian_S, 0)
-                        tuijian_Thist[0] = tuijian_zjhist
-                list_RL[i][gengxin][1] = tuijian_result
-            zjhist = zhijie(dangqian(list_HL[i], list_hhh[i]), lishi(list_HL[i]), list_hhh[i], list_HL[i][19][1],
+                            recommended_trust_add += abs(recommended_trust_HL[0][j + 1][0] - recommended_trust_HL[0][j][0])
+                        recommended_trust_S = recommended_trust_add / 19
+                        recommended_trust_HL[0][19][1] = recommended_trust_S
+                        recommended_trust_interation_count[0] += 1  # 更新历史交互次数列表
+                        recommended_trust_direct_hist = direct_trust(current_trust(recommended_trust_HL[0], recommended_trust_interation_count[0]), historical_trust(recommended_trust_HL[0]),
+                                                recommended_trust_interation_count[0], recommended_trust_HL[0][19][1], recommended_trust_HL[0], recommended_trust_Thist[0])
+                        recommended_trust_result = function(recommended_trust_p.R, recommended_trust_interation_count, recommended_trust_HL, recommended_trust_RL, recommended_trust_Thist,
+                                                 recommended_trust_S, 0)
+                        recommended_trust_Thist[0] = recommended_trust_direct_hist
+                list_RL[i][update_value][1] = recommended_trust_result
+            direct_hist = direct_trust(current_trust(list_HL[i], list_interation_count[i]), historical_trust(list_HL[i]), list_interation_count[i], list_HL[i][19][1],
                             list_HL[i], list_Thist[i])
-            result = hanshhu(p.R, list_hhh, list_HL, list_RL, list_Thist, list_HL[i][19][1], i)
-            print('{},{},{},{},{},{}'.format(circul + 1, dangqian(list_HL[i], list_hhh[i]), lishi(list_HL[i]), zjhist,
-                                             tuijian(list_RL[i]), result), file=f)
-            list_Thist[i] = zjhist
+            result = function(p.R, list_interation_count, list_HL, list_RL, list_Thist, list_HL[i][19][1], i)
+            print('{},{},{},{},{},{}'.format(circul + 1, current_trust(list_HL[i], list_interation_count[i]), historical_trust(list_HL[i]), direct_hist,
+                                             recommended_trust(list_RL[i]), result), file=f)
+            list_Thist[i] = direct_hist
 
         # print('\n',file=f)
 

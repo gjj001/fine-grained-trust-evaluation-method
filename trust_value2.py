@@ -34,9 +34,9 @@ class Node:
             acc.append(random.randint(5000,10000)/10000)
             d.append(random.randint(0,5000)/10000)
             pass
-        aaa=ACC(acc)
-        bbb=DDD(d)
-        self.R=(1/(1+math.exp(-aaa)))*bbb
+        abnormal_factor=ACC(acc)
+        delay_factor=calculate_delay_factor(d)
+        self.R=(1/(1+math.exp(-abnormal_factor)))*delay_factor
         for i in range(10):
             if i<9:
                 sum+=abs(acc[i+1]-acc[i])
@@ -44,9 +44,9 @@ class Node:
                 break
         self.S=sum/9
         print('异常信息 acc : {}'.format(acc), file=f)
-        print('异常因子 aaa : {}'.format(aaa), file=f)
+        print('异常因子 abnormal_factor : {}'.format(abnormal_factor), file=f)
         print('时延信息 d : {}'.format(d), file=f)
-        print('时延因子 bbb : {}'.format(bbb), file=f)
+        print('时延因子 delay_factor : {}'.format(delay_factor), file=f)
         print('行为可靠性 R : {}'.format(self.R), file=f)
         print('行为稳定性 S : {}'.format(self.S), file=f)
         pass
@@ -64,9 +64,9 @@ class Node:
             acc.append(random.randint(0,5000)/10000)
             d.append(random.randint(5000,10000)/10000)
             pass
-        aaa = ACC(acc)
-        bbb = DDD(d)
-        self.R=(1/(1+math.exp(-aaa)))*bbb
+        abnormal_factor = ACC(acc)
+        delay_factor = calculate_delay_factor(d)
+        self.R=(1/(1+math.exp(-abnormal_factor)))*delay_factor
         for i in range(10):
             if i<9:
                 sum+=abs(acc[i + 1]-acc[i])
@@ -74,9 +74,9 @@ class Node:
                 break
         self.S=sum/9
         print('异常信息 acc : {}'.format(acc), file=f)
-        print('异常因子 aaa : {}'.format(aaa), file=f)
+        print('异常因子 abnormal_factor : {}'.format(abnormal_factor), file=f)
         print('时延信息 d : {}'.format(d), file=f)
-        print('时延因子 bbb : {}'.format(bbb), file=f)
+        print('时延因子 delay_factor : {}'.format(delay_factor), file=f)
         print('行为可靠性 R : {}'.format(self.R), file=f)
         print('行为稳定性 S : {}'.format(self.S), file=f)
         pass
@@ -97,9 +97,9 @@ class Node:
             else:
                 acc.append(random.randint(0,5000)/10000)
                 d.append(random.randint(5000,10000)/10000)
-        aaa=ACC(acc)
-        bbb=DDD(d)
-        self.R=(1/(1+math.exp(-aaa)))*bbb
+        abnormal_factor=ACC(acc)
+        delay_factor=calculate_delay_factor(d)
+        self.R=(1/(1+math.exp(-abnormal_factor)))*delay_factor
         for i in range(10):
             if i<9:
                 sum+=abs(acc[i+1]-acc[i])
@@ -107,9 +107,9 @@ class Node:
                 break
         self.S=sum/9
         print('异常信息 acc : {}'.format(acc), file=f)
-        print('异常因子 aaa : {}'.format(aaa), file=f)
+        print('异常因子 abnormal_factor : {}'.format(abnormal_factor), file=f)
         print('时延信息 d : {}'.format(d), file=f)
-        print('时延因子 bbb : {}'.format(bbb), file=f)
+        print('时延因子 delay_factor : {}'.format(delay_factor), file=f)
         print('行为可靠性 R : {}'.format(self.R), file=f)
         print('行为稳定性 S : {}'.format(self.S), file=f)
         pass
@@ -121,7 +121,7 @@ class Node:
         '''
         pass
 
-class Sever:
+class Server:
     '''
     定义一个服务器类，直接计算得到节点的间接信任值
     '''
@@ -138,16 +138,16 @@ class Sever:
         :return:
         '''
         valuelist=[]
-        h_Sever=[]
+        h_Server=[]
         h_all=0
         for i in range(self.amount):
             valuelist.append(random.randint(5000,10000)/10000)
-            h_Sever.append(random.randint(0,50))
-            h_all+=h_Sever[i]
+            h_Server.append(random.randint(0,50))
+            h_all+=h_Server[i]
         for i in range(self.amount):
-            self.Text+=(h_Sever[i]/h_all)*valuelist[i]
+            self.Text+=(h_Server[i]/h_all)*valuelist[i]
         print('推荐信任值集合：{}'.format(valuelist), file=f)
-        print('对应推荐服务器历史交互次数：{}'.format(h_Sever), file=f)
+        print('对应推荐服务器历史交互次数：{}'.format(h_Server), file=f)
         print('间接信任值：{}'.format(self.Text), file=f)
         pass
     def way2(self, f):
@@ -157,16 +157,16 @@ class Sever:
         :return:
         '''
         valuelist=[]
-        h_Sever=[]
+        h_Server=[]
         h_all=0
         for i in range(self.amount):
             valuelist.append(random.randint(-10000,-5000)/10000)
-            h_Sever.append(random.randint(0, 50))
-            h_all += h_Sever[i]
+            h_Server.append(random.randint(0, 50))
+            h_all += h_Server[i]
         for i in range(self.amount):
-            self.Text+=(h_Sever[i]/h_all)*valuelist[i]
+            self.Text+=(h_Server[i]/h_all)*valuelist[i]
         print('推荐信任值集合：{}'.format(valuelist), file=f)
-        print('对应推荐服务器历史交互次数：{}'.format(h_Sever), file=f)
+        print('对应推荐服务器历史交互次数：{}'.format(h_Server), file=f)
         print('间接信任值：{}'.format(self.Text), file=f)
         pass
     def way3(self, f):
@@ -176,19 +176,19 @@ class Sever:
         :return:
         '''
         valuelist=[]
-        h_Sever=[]
+        h_Server=[]
         h_all=0
         for i in range(self.amount):
             if i%2==0:
                 valuelist.append(random.randint(0,10000)/10000)
             else:
                 valuelist.append(random.randint(-10000,0)/10000)
-            h_Sever.append(random.randint(0, 50))
-            h_all += h_Sever[i]
+            h_Server.append(random.randint(0, 50))
+            h_all += h_Server[i]
         for i in range(self.amount):
-            self.Text+=(h_Sever[i]/h_all)*valuelist[i]
+            self.Text+=(h_Server[i]/h_all)*valuelist[i]
         print('推荐信任值集合：{}'.format(valuelist), file=f)
-        print('对应推荐服务器历史交互次数：{}'.format(h_Sever), file=f)
+        print('对应推荐服务器历史交互次数：{}'.format(h_Server), file=f)
         print('间接信任值：{}'.format(self.Text), file=f)
         pass
 
@@ -198,16 +198,16 @@ def ACC(list):
     xx=0
     for i in range(10):
         xx+=pow(list[i],i+1)*pow(0.8,10-i)
-    aaa=1-math.exp(-xx)
-    return aaa
+    abnormal_factor=1-math.exp(-xx)
+    return abnormal_factor
 
 #2、定义函数，计算时延因子
-def DDD(list):
+def calculate_delay_factor(list):
     yy=0
     for i in range(10):
         yy+=pow(list[i],i+1)*pow(0.8,10-i)
-    bbb=math.exp(-yy)
-    return bbb
+    delay_factor=math.exp(-yy)
+    return delay_factor
 
 #3、定义函数，计算时间衰减因子，参数t是当前时间，t0是最后一次信任建立更新时间
 #时间抽象为周期数
@@ -281,9 +281,9 @@ def main(f):
     # 模拟联邦学习
     # for循环共进行20个周期，每个周期进行10轮迭代
     # 存储1-100节点历史交互次数
-    list_hhh = []
+    list_interaction_counts = []
     for i in range(100):
-        list_hhh.append(0)
+        list_interaction_counts.append(0)
     # 存储1-100节点历史信任值
     list_Thist = []
     for i in range(100):
@@ -291,7 +291,7 @@ def main(f):
     recomnum = 50
     mark1 = 0
     mark2 = 1
-    SSS = [0]  # 存储行为稳定性
+    Storage_behavior_stability = [0]  # 存储行为稳定性
     for circul in range(20):
         print('第{}个周期'.format(circul + 1), file=f)
         print('-' * 80, file=f)
@@ -302,62 +302,62 @@ def main(f):
             print('{} ***'.format(i + 1), file=f)
             # 行为1
             if i + 1 < 40:
-                p = Node(1, 0, list_hhh[i], recomnum)  # 行为 信任值 历史交互次数 推荐服务器数量
+                p = Node(1, 0, list_interaction_counts[i], recomnum)  # 行为 信任值 历史交互次数 推荐服务器数量
                 p.behav1(f)  # 行为稳定性和行为可靠性
-                sever = Sever(recomnum)
-                sever.way1(f)  # 间接信任度
-                Text = sever.Text
-                Tint = dirvalue(p, list_Thist[i], list_hhh[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
+                server = Server(recomnum)
+                server.way1(f)  # 间接信任度
+                Text = server.Text
+                Tint = dirvalue(p, list_Thist[i], list_interaction_counts[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
                 print('直接信任值：{}'.format(Tint), file=f)
-                TTT = value(Tint, Text, list_hhh[i], recomnum)  # 最终信任度
+                TTT = value(Tint, Text, list_interaction_counts[i], recomnum)  # 最终信任度
                 print('信任值：{}'.format(TTT), file=f)
                 list_Thist[i] = TTT
-                list_hhh[i] += 1
+                list_interaction_counts[i] += 1
             # 行为2
             elif i + 1 >= 40 and i + 1 < 60:
-                p = Node(2, 0, list_hhh[i], recomnum)
+                p = Node(2, 0, list_interaction_counts[i], recomnum)
                 p.behav2(f)
-                sever = Sever(recomnum)
-                sever.way2(f)
-                Text = sever.Text
-                Tint = dirvalue(p, list_Thist[i], list_hhh[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
+                server = Server(recomnum)
+                server.way2(f)
+                Text = server.Text
+                Tint = dirvalue(p, list_Thist[i], list_interaction_counts[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
                 print('直接信任值：{}'.format(Tint), file=f)
-                TTT = value(Tint, Text, list_hhh[i], recomnum)  # 最终信任度
+                TTT = value(Tint, Text, list_interaction_counts[i], recomnum)  # 最终信任度
                 print('信任值：{}'.format(TTT), file=f)
                 list_Thist[i] = TTT
-                list_hhh[i] += 1
+                list_interaction_counts[i] += 1
             # 行为3
             elif i + 1 >= 60 and i + 1 < 80:
-                p = Node(3, 0, list_hhh[i], recomnum)
+                p = Node(3, 0, list_interaction_counts[i], recomnum)
                 if mark1 % 2 == 0:
                     p.behav1(f)
                 elif mark1 % 2 == 1:
                     p.behav2(f)
-                sever = Sever(recomnum)
-                sever.way3(f)
-                Text = sever.Text
-                Tint = dirvalue(p, list_Thist[i], list_hhh[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
+                server = Server(recomnum)
+                server.way3(f)
+                Text = server.Text
+                Tint = dirvalue(p, list_Thist[i], list_interaction_counts[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
                 print('直接信任值：{}'.format(Tint), file=f)
-                TTT = value(Tint, Text, list_hhh[i], recomnum)  # 最终信任度
+                TTT = value(Tint, Text, list_interaction_counts[i], recomnum)  # 最终信任度
                 print('信任值：{}'.format(TTT), file=f)
                 list_Thist[i] = TTT
-                list_hhh[i] += 1
+                list_interaction_counts[i] += 1
             # 行为4
             else:
-                p = Node(4, 0, list_hhh[i], recomnum)
+                p = Node(4, 0, list_interaction_counts[i], recomnum)
                 if mark2 % 5 == 0:
                     p.behav2(f)
                 else:
                     p.behav1(f)
-                sever = Sever(recomnum)
-                sever.way3(f)
-                Text = sever.Text
-                Tint = dirvalue(p, list_Thist[i], list_hhh[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
+                server = Server(recomnum)
+                server.way3(f)
+                Text = server.Text
+                Tint = dirvalue(p, list_Thist[i], list_interaction_counts[i], 10, 8)  # 当前时间10，最后一次信任建立时间8  直接信任度
                 print('直接信任值：{}'.format(Tint), file=f)
-                TTT = value(Tint, Text, list_hhh[i], recomnum)  # 最终信任度
+                TTT = value(Tint, Text, list_interaction_counts[i], recomnum)  # 最终信任度
                 print('信任值：{}'.format(TTT), file=f)
                 list_Thist[i] = TTT
-                list_hhh[i] += 1
+                list_interaction_counts[i] += 1
 
         mark1 += 1
         mark2 += 1
